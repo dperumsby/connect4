@@ -1,67 +1,72 @@
-class Connect4():
+class Connect4:
 
     def __init__(self):
-        # numbering of grid is visualised in lines starting from bottom left
-        self.grid = [i for i in range(42)]
-        self.columns = [0, 0, 0, 0, 0, 0, 0]
-        self.turns = 0
-        self.won = False
+        self.grid = [[0]*7 for _ in range(6)]
+        self.player = 1
+        self.finished = False
+ 
+    def check(self, row, col):
+        # check potential vertical win line
+        if row >= 3 and self.grid[row][col] == self.grid[row-1][col] == self.grid[row-2][col] == self.grid[row-3][col]:
+            return True
+
+        # check potential horizontal win lines
+        for i in range(max(0,col-3), min(3,col)+1):
+            if self.grid[row][i] == self.grid[row][i+1] == self.grid[row][i+2] == self.grid[row][i+3]:
+                return True
+
+        # check potential upward diagonal win lines
+        for i in range(-min(3, row, col), min(1, 3-row, 4-col)):
+            if self.grid[row+i][col+i] == self.grid[row+i+1][col+i+1] == self.grid[row+i+2][col+i+2] == self.grid[row+i+3][col+i+3]:
+                return True
+
+        # check potential downward diagonal win lines
+        for i in range(-min(3, row, 6-col), min(1, 3-row, col-2)):
+            if self.grid[row+i][col-i] == self.grid[row+i+1][col-i-1] == self.grid[row+i+2][col-i-2] == self.grid[row+i+3][col-i-3]:
+                return True
 
     def play(self, col):
-        if self.won: return "Game has finished!"
+        if self.finished: return "Game has finished!\n"
 
-        position = col + self.columns[col]*7
-        player = (self.turns % 2) + 1
-        row = int(position / 7)
+        row = next((i for i in range(6) if not self.grid[i][col]), None)
+        if row is None: return "\nColumn is full!\n"
 
-        # positions that have potential upwards or downwards diagonal win lines
-        upward_diag = [
-            0,1,2,3,7,8,9,10,11,14,15,16,17,18,19,
-            22,23,24,25,26,27,30,31,32,33,34,38,39,40,41
-        ]
-        downward_diag = [
-            3,4,5,6,9,10,11,12,13,15,16,17,18,19,20,
-            21,22,23,24,25,26,28,29,30,31,32,35,36,37,38
-        ]
-       
-        if position > 41:
-            self.turns += 2
-            return "Column full!"
+        self.grid[row][col] = self.player
         
-        if self.turns % 2 == 0:
-            self.grid[position] = "red"
-        else: 
-            self.grid[position] = "yellow"
+        if self.check(row,col):  # checks potential win based on current move 
+            res = f"\nPlayer {self.player} wins!\n"
+            self.finished = True
+        else:
+            res = f"\nPlayer {self.player} played into column {col}\n"
 
-        for i in range(col, col+15, 7):  # checking all win lines in current column
-            if self.grid[i] == self.grid[i+7] == self.grid[i+14] == self.grid[i+21]:
-                self.won = True
-                return f"Player {player} wins!"
+        self.player = 3 - self.player  # cycles player turn between 1 and 2
+        
+        return res 
 
-        for i in range(row*7,(row*7)+4):  # checking all win lines in current row
-            if self.grid[i] == self.grid[i+1] == self.grid[i+2] == self.grid[i+3]:
-                self.won = True
-                return f"Player {player} wins!"
+    def visual(self):
+        for row in reversed(self.grid):
+            output = "|"
+            for cell in row:
+                if cell == 1:
+                    output += "X|"
+                elif cell == 2:
+                    output += "O|"
+                else:
+                    output += " |"
+            print(output)
+            
 
-        if position in upward_diag:  # checking all win lines in current upward diagonal
-            try:
-                for i in range(position-(min(row,col)*8), position+(min(5-row,6-col)*8), 8):
-                    if self.grid[i] == self.grid[i+8] == self.grid[i+16] == self.grid[i+24]:
-                        self.won = True
-                        return f"Player {player} wins!"
-            except:
-                pass
+def main():
+    while True:
+        game = Connect4()
+        while game.finished == False:
+            game.visual()
+            col = int(input(f"\nPlayer {game.player}. Pick a column (0-6): ")) 
+            print(game.play(col))         
+        game.visual()
+        print("\nCongratulations!")
+        replay = input("Would you like to play again (y/n)? ")
+        if replay == "n": break
 
-        if position in downward_diag:  # checking all win lines in current downward diagonal
-            try:
-                for i in range(position-(min(row,6-col)*6), position+(min(5-row,col)*6), 6):
-                    if self.grid[i] == self.grid[i + 6] == self.grid[i + 12] == self.grid[i + 18]:
-                        self.won = True
-                        return f"Player {player} wins!"
-            except:
-                pass
 
-        self.turns += 1
-        self.columns[col] += 1
-
-        return f"Player {player} has a turn"
+main()
