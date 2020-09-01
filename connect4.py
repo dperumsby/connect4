@@ -58,6 +58,7 @@ class Connect4:
 
 def main():
     while True:
+        print("\nWelcome to my Connect4 game!\n")
         game = Connect4()
         while game.finished == False:
             game.visual()
